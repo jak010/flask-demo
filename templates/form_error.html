@@ -12,3 +12,10 @@
     {% endfor %}
 </div>
 {% endif %}
+
+<!--  flash error -->
+{% for message in get_flashed_messages() %}
+<div class="alert alert-danger" role="alert">
+    {{ message }}
+</div>
+{% endfor %}
