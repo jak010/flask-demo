@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from flask import Blueprint, render_template, url_for, request, flash
+from flask import Blueprint, render_template, url_for, request, flash, session
 from werkzeug.utils import redirect
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import db
 from application.models import Question, Answer, User
-from application.pybo.forms import QuestionForm, AnswerForm, UserCreateForm
+from application.pybo.forms import QuestionForm, AnswerForm, UserCreateForm, UserLoginForm
 
 bp = Blueprint("pybo", __name__, url_prefix='/pybo')
 
@@ -86,3 +86,21 @@ def signup():
         else:
             flash('이미 존재하는 사용자입니다.')
     return render_template('auth/signup.html', form=form)
+
+
+@bp.route("/login/", methods=("GET", "POST"))
+def login():
+    form = UserLoginForm()
+    if request.method == "POST" and form.validate_on_submit():
+        error = None
+        user = User.query.filter_by(username=form.username.data).first()
+        if not user:
+            error = "존재하지 않는 사용자입니다."
+        elif not check_password_hash(user.password, form.password.data):
+            error = "비밀번호가 올바르지 않습니다."
+        if error is None:
+            session.clear()
+            session['user_id'] = user.id
+            return redirect(url_for("main.index"))
+        flash(error)
+    return render_template("auth/login.html", form=form)
